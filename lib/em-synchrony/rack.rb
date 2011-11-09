@@ -77,7 +77,6 @@ module EM::Synchrony
       EM.start_server(host, port, RequestHandler) do |c|
         c.rack_server = self
       end
-      puts "Started"
     end
 
   end

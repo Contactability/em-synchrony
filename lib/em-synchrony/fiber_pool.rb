@@ -80,5 +80,23 @@ module EM::Synchrony
       e.wait
     end
 
+    # Iterate through enumerable, execute each in pool, and wait their completion.
+    def iterate(enumerable, &blk)
+      g = EM::Synchrony::Group.new
+      f = Fiber.current
+      enumerable.each do |val|
+        if fp.fibers.size > 0
+          fp.spawn(val, &g.with(&blk))
+        else
+          fp.spawn do
+            f.resume val
+          end
+          val = Fiber.yield
+          fp.spawn(val, &g.with(&blk))
+        end
+      end
+      g.wait
+    end
+
   end
 end
