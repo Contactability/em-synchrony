@@ -85,14 +85,14 @@ module EM::Synchrony
       g = EM::Synchrony::Group.new
       f = Fiber.current
       enumerable.each do |val|
-        if fp.fibers.size > 0
-          fp.spawn(val, &g.with(&blk))
+        if fibers.size > 0
+          spawn(val, &g.with(&blk))
         else
-          fp.spawn do
+          spawn do
             f.resume val
           end
           val = Fiber.yield
-          fp.spawn(val, &g.with(&blk))
+          spawn(val, &g.with(&blk))
         end
       end
       g.wait
