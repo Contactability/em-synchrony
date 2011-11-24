@@ -1,3 +1,4 @@
+require 'em-synchrony/event'
 module EM::Synchrony
   class Group
     def initialize

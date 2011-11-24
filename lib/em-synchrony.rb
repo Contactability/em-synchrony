@@ -54,8 +54,8 @@ module EventMachine
         end
       end
 
-      df.callback &xback
-      df.errback &xback
+      df.callback(&xback)
+      df.errback(&xback)
 
       Fiber.yield
     end
@@ -70,6 +70,12 @@ module EventMachine
     def self.sleep(secs)
       fiber = Fiber.current
       EM::Timer.new(secs) { fiber.resume }
+      Fiber.yield
+    end
+
+    def self.wait_next_tick
+      fiber = Fiber.current
+      EM.next_tick { fiber.resume }
       Fiber.yield
     end
 
