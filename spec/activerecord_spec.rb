@@ -62,7 +62,7 @@ describe "Fiberized ActiveRecord driver for mysql2" do
         end).resume
       end
       g.wait
-      ActiveRecord::Base.connection_pool.connections.size.should equal(5)
+      ActiveRecord::Base.connection_pool.connections.size.should eql(5)
       EM.stop
 
     end

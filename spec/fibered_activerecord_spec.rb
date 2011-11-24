@@ -4,11 +4,14 @@ require "em-synchrony/group"
 
 # create database widgets;
 # use widgets;
-# create table widgets (idx INT);
-
-class Widget < ActiveRecord::Base; end;
-
+# create table widgets (
+# id INT NOT NULL AUTO_INCREMENT,
+# title varchar(255),
+# PRIMARY KEY (`id`)
+# );
 describe "Fiberized ActiveRecord driver for mysql2" do
+  class Widget < ActiveRecord::Base; end;
+
   DELAY = 0.25
   QUERY = "SELECT sleep(#{DELAY})"
 
@@ -27,7 +30,7 @@ describe "Fiberized ActiveRecord driver for mysql2" do
       establish_connection
 
       result = Widget.find_by_sql(QUERY)
-      result.size.should equal(1)
+      result.size.should eql(1)
       EventMachine.stop
     end
   end
@@ -43,7 +46,7 @@ describe "Fiberized ActiveRecord driver for mysql2" do
       res.push Widget.find_by_sql(QUERY)
 
       (now - start.to_f).should be_within(DELAY * res.size * 0.15).of(DELAY * res.size)
-      res.size.should equal(2)
+      res.size.should eql(2)
 
       EventMachine.stop
     end
@@ -59,6 +62,28 @@ describe "Fiberized ActiveRecord driver for mysql2" do
         end).resume
       end
       g.wait
+      EM.stop
+    end
+  end
+
+  it "should create widget" do
+    EM.synchrony do
+      establish_connection
+      ActiveRecord::Base.connection.execute("TRUNCATE TABLE widgets;")
+      Widget.create
+      Widget.create
+      Widget.count.should eql(2)
+      EM.stop
+    end
+  end
+
+  it "should update widget" do
+    EM.synchrony do
+      establish_connection
+      ActiveRecord::Base.connection.execute("TRUNCATE TABLE widgets;")
+      widget = Widget.create title: 'hi'
+      widget.update_attributes title: 'hello'
+      Widget.find(widget.id).title.should eql('hello')
       EM.stop
     end
   end

@@ -15,7 +15,7 @@ describe EventMachine::Synchrony::Mutex do
       end.resume
       f1 = Fiber.new do
         m.synchronize do
-          i.should equal(1)
+          i.should eql(1)
           EM.stop
         end
       end.resume
@@ -47,7 +47,7 @@ describe EventMachine::Synchrony::Mutex do
           f = Fiber.current
           EM.next_tick { i += 1; f.resume }
           res = m.sleep
-          i.should equal(1)
+          i.should eql(1)
           EM.stop
         end
       end
@@ -65,7 +65,7 @@ describe EventMachine::Synchrony::Mutex do
           end.resume
           Fiber.new do 
             m.lock
-            i.should equal(1)
+            i.should eql(1)
             EM.stop
           end.resume
         end
@@ -77,7 +77,7 @@ describe EventMachine::Synchrony::Mutex do
           f1 = Fiber.new do 
             m.lock
             m.sleep
-            i.should equal(1)
+            i.should eql(1)
             EM.stop
           end
           f2 = Fiber.new do 
@@ -97,7 +97,7 @@ describe EventMachine::Synchrony::Mutex do
             i = 0
             EM.next_tick { i += 1 }
             m.sleep(0.05)
-            i.should equal(1)
+            i.should eql(1)
             EM.stop
           end
         end
@@ -132,7 +132,7 @@ describe EventMachine::Synchrony::ConditionVariable do
           m.synchronize do
             cond_var.wait m
           end
-          i.should equal(1)
+          i.should eql(1)
           EM.stop
         end.resume
       end
@@ -198,7 +198,7 @@ describe EventMachine::Synchrony::MonitorMixin do
             cond.wait_while { buf.empty? }
             size = buf.size
             EM::Synchrony.wait_next_tick
-            buf.size.should equal(size)
+            buf.size.should eql(size)
           end
         end
       end.resume
