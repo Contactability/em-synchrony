@@ -98,5 +98,9 @@ module EM::Synchrony
       g.wait
     end
 
+    def iterate_each(enumerable, &blk)
+      iterate(enumerable) { |rows| rows.each(&blk) }
+    end
+
   end
 end
