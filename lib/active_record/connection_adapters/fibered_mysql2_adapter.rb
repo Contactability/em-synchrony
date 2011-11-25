@@ -8,6 +8,8 @@ module ActiveRecord
     def self.fibered_mysql2_connection(config)
       client = EM::Synchrony::ConnectionPool.new(size: config[:real_pool]) do
         conn = Mysql2::EM::Client.new(config.symbolize_keys)
+
+        # From Mysql2Adapter#configure_connection
         conn.query_options.merge!(:as => :array)
 
         # By default, MySQL 'where id is null' selects the last inserted id.
