@@ -1,11 +1,11 @@
 require 'em-synchrony'
-require 'rehub/em-synchrony'
 require 'ffi-rzmq'
 module ZMQ
   class Socket
     alias :bsend :send
     def send(message, flags = 0)
-      flags |= ZMQ::Util.nonblocking_flag
+      return bsend(message, flags) if (flags & ZMQ::NOBLOCK) != 0
+      flags |= ZMQ::NOBLOCK
       while EM.reactor_running? do
         sock_wait false, true
         rc = bsend message, flags
@@ -17,7 +17,8 @@ module ZMQ
 
     alias :brecv :recv
     def recv(message, flags = 0)
-      flags |= ZMQ::Util.nonblocking_flag
+      return brecv(message, flags) if (flags & ZMQ::NOBLOCK) != 0
+      flags |= ZMQ::NOBLOCK
       while EM.reactor_running? do
         sock_wait true, false
         rc = brecv message, flags
@@ -30,20 +31,15 @@ module ZMQ
     protected
 
     def sock_wait(read = false, write = false)
-      events = getsockopt_or_false(ZMQ::EVENTS)
+      events, = [].tap { |a| getsockopt(ZMQ::EVENTS, a) }
       if read && (events & ZMQ::POLLIN) == ZMQ::POLLIN
         return
       elsif write && (events & ZMQ::POLLOUT) == ZMQ::POLLOUT
         return
       else
-        EM::Synchrony.trampoline(getsockopt_or_false(ZMQ::FD), read: read, write: write)
+        fd, = [].tap { |a| getsockopt(ZMQ::FD, a) }
+        EM::Synchrony.trampoline(fd, read: read, write: write)
       end
-    end
-
-    def getsockopt_or_false(option)
-      array = []
-      rc = getsockopt(option, array)
-      ZMQ::Util.resultcode_ok?(rc) ? array.at(0) : false
     end
   end
 end
