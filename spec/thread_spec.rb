@@ -38,7 +38,6 @@ describe EventMachine::Synchrony::Mutex do
   end
 
   describe "sleep" do
-  # TODO: release lock
     describe "without timeout" do
       it "should sleep until resume" do
         EM.synchrony do

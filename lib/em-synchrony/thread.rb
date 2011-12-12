@@ -58,7 +58,6 @@ module EM::Synchrony
     ensure
       unlock
     end
-
   end
 
   class ConditionVariable
