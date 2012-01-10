@@ -5,9 +5,8 @@
 # Just update your database.yml's adapter to be 'em_mysql2'
 # to real connection pool size.
 
-require 'mysql2/em'
-require 'em-synchrony/activerecord'
 require 'em-synchrony/mysql2'
+require 'em-synchrony/activerecord'
 require 'active_record/connection_adapters/mysql2_adapter'
 
 module ActiveRecord
