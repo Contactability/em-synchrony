@@ -45,7 +45,13 @@ module EM::Synchrony
           if header =~ /^HTTP_/
             env[header] = val
           end
+          if header == 'Host'
+            name, port = val.split(':')
+            env['SERVER_NAME'] = name
+            env['SERVER_PORT'] = port || 80
+          end
         end
+
         env
       end
 
