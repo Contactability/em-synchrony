@@ -1,6 +1,8 @@
 # Author::    Mohammad A. Ali  (mailto:oldmoe@gmail.com)
 # Copyright:: Copyright (c) 2008 eSpace, Inc.
 # License::   Distributes under the same terms as Ruby
+require 'em-sycnhrony/event'
+require 'em-sycnhrony/group'
 module EM::Synchrony
 
   class FiberPool
