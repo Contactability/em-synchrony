@@ -1,7 +1,7 @@
 require "spec/helper/all"
 
-describe EventMachine::Synchrony::Mutex do
-  let(:m) { EM::Synchrony::Mutex.new }
+describe EventMachine::Synchrony::Thread::Mutex do
+  let(:m) { EM::Synchrony::Thread::Mutex.new }
   it "should synchronize" do
     EM.synchrony do
       i = 0
@@ -89,6 +89,7 @@ describe EventMachine::Synchrony::Mutex do
           f2.resume
         end
       end
+      
       describe "with timeout" do
         it "should sleep for timeout" do
           EM.synchrony do
@@ -110,107 +111,81 @@ describe EventMachine::Synchrony::Mutex do
               EM.add_timer(0.1) { EM.stop }
             end
           end
+          it "should resume in nested Fiber" do
+            EM.synchrony do
+              f = Fiber.new do
+                m.synchronize do
+                  t = m.sleep(0.05)
+                  t.should >= 0.05
+                end
+                EM.stop
+              end
+              f.resume
+            end
+          end
         end
       end
     end
   end
-end
-
-describe EventMachine::Synchrony::ConditionVariable do
-  let(:m) { EM::Synchrony::Mutex.new }
-  let(:cond_var) { EM::Synchrony::ConditionVariable.new }
-  describe "signal" do
-    it "should wait signal" do
-      EM.synchrony do
-        i = 0
-        EM.next_tick do 
-          i += 1
-          cond_var.signal
-        end
-        Fiber.new do
-          m.synchronize do
-            cond_var.wait m
-          end
-          i.should eql(1)
-          EM.stop
-        end.resume
-      end
-    end
-
-    it "should resume only one fiber" do
+  describe EventMachine::Synchrony::Thread::ConditionVariable do
+    let(:c){ EM::Synchrony::Thread::ConditionVariable.new }
+    it "should wakeup waiter" do
+      i = ''
       EM.synchrony do
         f1 = Fiber.new do
           m.synchronize do
-            cond_var.wait m
+            i << 'a'
+            c.wait(m)
+            i << 'c'
           end
-        end
-        f2 = Fiber.new do 
-          m.synchronize do
-            cond_var.wait m
-          end
-        end        
-        f1.resume
-        f2.resume
-        cond_var.signal
-        f1.alive?.should be_false
-        f2.alive?.should be_true
-        cond_var.signal
-        f1.alive?.should be_false
-        f2.alive?.should be_false
-        EM.stop
+          EM.stop
+        end.resume
+        f2 = Fiber.new do
+          i << 'b'
+          c.signal
+        end.resume
       end
+      i.should == 'abc'
     end
-  end
-
-  describe "broadcast" do
-    it "should resume all fibers" do
+    it 'should allow to play ping-pong' do
+      i = ''
       EM.synchrony do
-        f1 = Fiber.new do 
+        f1 = Fiber.new do
           m.synchronize do
-            cond_var.wait m
+            i << 'pi'
+            c.wait(m)
+            i << '-po'
+            c.signal
           end
-        end
-        f2 = Fiber.new do 
+        end.resume
+        f2 = Fiber.new do
           m.synchronize do
-            cond_var.wait m
+            i << 'ng'
+            c.signal
+            c.wait(m)
+            i << 'ng'
           end
-        end
-        f1.resume; f2.resume
-        cond_var.broadcast
-        f1.alive?.should be_false
-        f2.alive?.should be_false
-        EM.stop
+          EM.stop
+        end.resume
       end
+      i.should == 'ping-pong'
     end
-  end
-end
-
-describe EventMachine::Synchrony::MonitorMixin do
-  let(:buf) { [].tap { |o| o.extend(EM::Synchrony::MonitorMixin) }}
-  let(:cond) { buf.new_cond }
-
-  it "should synchronize fibers" do
-    EM.synchrony do
-      Fiber.new do
-        while EM.reactor_running?
-          buf.synchronize do
-            cond.wait_while { buf.empty? }
-            size = buf.size
-            EM::Synchrony.wait_next_tick
-            buf.size.should eql(size)
+    it 'should not raise, when timer wakes up fiber between `signal` and `next_tick`' do
+      proc {
+        EM.synchrony do
+          f = Fiber.new do
+            m.synchronize do
+              c.wait(m, 0.0001)
+            end
+            EM.add_timer(0.001){ EM.stop }
           end
+          i = 0
+          f.resume
+          EM.next_tick{
+            c.signal
+          }
         end
-      end.resume
-
-      Fiber.new do
-        [:foo, :bar, :zoo].each do |v|
-          buf.synchronize do
-            buf.push v
-            cond.signal
-          end
-        end
-        EM.stop
-      end.resume
+      }.should_not raise_error
     end
   end
 end
