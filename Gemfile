@@ -16,4 +16,8 @@ group :development do
   gem 'em-hiredis'
   gem 'mongo'
   gem 'amqp'
+  gem 'ffi-rzmq'
+  gem 'rack'
+  gem 'eventmachine_httpserver'
+  gem 'debugger'
 end
