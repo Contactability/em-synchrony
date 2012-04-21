@@ -14,7 +14,7 @@ module ActiveRecord
       end
 
       def _fibered_mutex
-        @fibered_mutex ||= EM::Synchrony::Mutex.new
+        @fibered_mutex ||= EM::Synchrony::Thread::Mutex.new
       end
     end
   end
