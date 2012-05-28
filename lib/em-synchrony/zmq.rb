@@ -40,9 +40,9 @@ module ZMQ
     def initialize(*args)
       super
       fd, = [].tap { |a| getsockopt(ZMQ::FD, a) }
-      c = EM.watch(fd, EM::Synchrony::ZMQ::NotifyHandler)
-      c.notify_clb = proc { @synchrony_send.wake; @synchrony_recv.wake }
-      c.notify_readable = true
+      @em_watcher = EM.watch(fd, EM::Synchrony::ZMQ::NotifyHandler)
+      @em_watcher.notify_clb = proc { @synchrony_send.wake; @synchrony_recv.wake }
+      @em_watcher.notify_readable = true
       @synchrony_send = EM::Synchrony::ZMQ::FiberBlock.new
       @synchrony_recv = EM::Synchrony::ZMQ::FiberBlock.new
     end
@@ -77,6 +77,11 @@ module ZMQ
           return rc
         end
       end
+    end
+
+    def close
+      sig = @em_watcher.signature
+      ::EM.detach_fd sig
     end
   end
 end
