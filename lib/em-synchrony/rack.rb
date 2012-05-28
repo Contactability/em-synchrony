@@ -66,6 +66,7 @@ module EM::Synchrony
           body.each do |part|
             send_data part
           end
+          body.close if body.respond_to? :close
           close_connection_after_writing
         end
       end
