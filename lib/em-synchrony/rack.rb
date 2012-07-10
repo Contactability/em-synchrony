@@ -42,13 +42,12 @@ module EM::Synchrony
         env['CONTENT_TYPE'] = @http_content_type if @http_content_type
         @http_headers.split(/\0/).each do |line| 
           header, val = line.split(/:\s*/, 2)
-          if header =~ /^HTTP_/
-            env[header] = val
-          end
           if header == 'Host'
             name, port = val.split(':')
             env['SERVER_NAME'] = name
             env['SERVER_PORT'] = port || 80
+          else
+            env["HTTP_#{header.upcase}"] = val
           end
         end
 
